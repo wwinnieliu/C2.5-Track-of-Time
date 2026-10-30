@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Track of Time</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=Special+Gothic+Expanded+One&display=swap" rel="stylesheet">
+<style>
+  :root { --display: 'Special Gothic Expanded One', sans-serif; --mono: 'IBM Plex Mono', monospace; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; background: #000; color: #fff; overflow: hidden; font-family: var(--mono); }
+
+  .page { position: fixed; inset: 0; opacity: 0; visibility: hidden; transition: opacity .5s ease, visibility .5s; background: #000; }
+  .page.active { opacity: 1; visibility: visible; }
+
+  /* ---------- landing ---------- */
+  .landing video, .landing .still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .landing .still { background: url(assets/landing.png) center / cover no-repeat; animation: drift 26s ease-in-out infinite alternate; }
+  .landing.has-video .still { display: none; }
+  @keyframes drift { from { transform: scale(1.02) translateX(-1%); } to { transform: scale(1.08) translateX(1%); } }
+
+  /* ---------- story ---------- */
+  .story { display: flex; }
+  .story .copy { flex: 0 0 66.5%; padding: 17vh 0 0 12%; }
+  .story h2 { font: 400 clamp(36px, 4.2vw, 64px)/1.1 var(--display); margin-bottom: 7vh; }
+  .story p { font: 400 clamp(13px, 1.25vw, 20px)/1.75 var(--mono); max-width: 36em; position: relative; z-index: 2; }
+  .story p + p { margin-top: 1.75em; }
+  .story .photo { flex: 1; position: relative; background: url(assets/story.jpg) center / cover no-repeat; }
+  .story .photo::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.35); }
+
+  /* ---------- key ---------- */
+  .key { display: grid; place-items: center; }
+  .key img { max-width: 94vw; max-height: 94vh; object-fit: contain; }
+
+  /* ---------- interaction ---------- */
+  .interaction .bg { position: absolute; inset: -40px; background: url(assets/landing.png) center / cover no-repeat; filter: blur(14px) brightness(.6) grayscale(1); }
+  .interaction svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .interaction text { fill: #fff; font-family: var(--mono); }
+  .scene * { transition: transform .9s cubic-bezier(.65,0,.35,1), opacity .9s cubic-bezier(.65,0,.35,1); }
+  .item { cursor: pointer; }
+  .toggle { position: absolute; right: 52px; bottom: 36px; background: none; border: 0; color: #fff; font: 400 11px/1 var(--mono); letter-spacing: .14em; padding-bottom: 6px; border-bottom: 1px solid #fff; cursor: pointer; }
+  .tip { position: fixed; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .12s; background: #2e2e2e; border: 1px solid #000; border-radius: 8px; padding: 7px 12px; font: 400 11px/1.3 var(--mono); color: #fff; white-space: nowrap; transform: translate(-50%, calc(-100% - 14px)); }
+  .tip.on { opacity: 1; }
+
+  /* ---------- nav ---------- */
+  .nav-btn { position: fixed; top: 0; right: 0; width: 64px; height: 64px; z-index: 40; background: none; border: 0; cursor: pointer; }
+  .nav-btn span { position: absolute; left: 17px; width: 30px; height: 2px; background: #fff; }
+  .nav-btn span:nth-child(1) { top: 20px; } .nav-btn span:nth-child(2) { top: 31px; } .nav-btn span:nth-child(3) { top: 42px; }
+  .home { position: fixed; top: 24px; left: 28px; z-index: 40; font: 400 12px/1 var(--mono); letter-spacing: .08em; color: #fff; text-decoration: none; opacity: 0; pointer-events: none; transition: opacity .4s; }
+  body:not([data-page="landing"]) .home { opacity: .8; pointer-events: auto; }
+
+  .menu { position: fixed; inset: 0; z-index: 50; opacity: 0; visibility: hidden; transition: opacity .3s ease, visibility .3s; }
+  .menu.open { opacity: 1; visibility: visible; }
+  .menu .panel { position: absolute; top: 0; right: 0; width: 180px; background: #fff; color: #000; padding: 92px 0 30px; text-align: center; }
+  .menu a { display: block; font: 400 22px/1 var(--display); color: #000; text-decoration: none; margin-bottom: 30px; }
+  .menu a:last-child { margin-bottom: 0; }
+  .menu a:hover { text-decoration: underline; text-underline-offset: 6px; }
+  .menu .close { position: absolute; top: 0; right: 0; width: 64px; height: 64px; background: none; border: 0; cursor: pointer; }
+  .menu .close::before, .menu .close::after { content: ""; position: absolute; left: 21px; top: 31px; width: 22px; height: 2px; background: #000; transform: rotate(45deg); }
+  .menu .close::after { transform: rotate(-45deg); }
+</style>
+</head>
+<body data-page="landing">
+
+<a class="home" href="#landing">Track of Time</a>
+<button class="nav-btn" id="navBtn" aria-label="Open navigation"><span></span><span></span><span></span></button>
+
+<nav class="menu" id="menu" aria-label="Pages">
+  <div class="backdrop" id="menuBackdrop" style="position:absolute;inset:0"></div>
+  <div class="panel">
+    <button class="close" id="menuClose" aria-label="Close menu"></button>
+    <a href="#landing">Landing</a>
+    <a href="#story">Story</a>
+    <a href="#key">Key</a>
+    <a href="#interaction">Interaction</a>
+  </div>
+</nav>
+
+<main>
+  <section class="page landing" id="landing">
+    <!-- drop your exported landing animation at assets/landing.mp4 and it plays automatically -->
+    <div class="still"></div>
+    <video autoplay muted loop playsinline preload="auto"><source src="assets/landing.mp4" type="video/mp4"></video>
+  </section>
+
+  <section class="page story" id="story">
+    <div class="copy">
+      <h2>Story</h2>
+      <p>A little tapping on the foot, constantly look around for the train to come. A sense of voice is telling you that this is a waste of time. But what if it’s not?</p>
+      <p>Waiting is something people see as dead time when it doesn’t have to be, as well as the idea that strangers you see at the station are all waiting together but never actually together. A platform is full of people sharing the same delay, the same annoyance, and the same boredom, and almost no one acknowledges it.</p>
+    </div>
+    <div class="photo"></div>
+  </section>
+
+  <section class="page key" id="key">
+    <img src="assets/key.png" alt="Key: colors for children, teens, young adults, elderly and things left behind; shapes for entering the tracks, thoughts, objects, and human behaviors">
+  </section>
+
+  <section class="page interaction" id="interaction">
+    <div class="bg"></div>
+    <svg id="svg" viewBox="300 1500 25700 16000" preserveAspectRatio="xMidYMid meet"></svg>
+    <button class="toggle" id="toggle">COLLAPSE</button>
+  </section>
+</main>
+<div class="tip" id="tip"></div>
+
+<script>
+/* ---------- routing + nav ---------- */
+const pages = ['landing', 'story', 'key', 'interaction'];
+const menu = document.getElementById('menu');
+function route() {
+  const id = pages.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'landing';
+  pages.forEach(p => document.getElementById(p).classList.toggle('active', p === id));
+  document.body.dataset.page = id;
+  menu.classList.remove('open');
+  document.getElementById('tip').classList.remove('on');
+}
+addEventListener('hashchange', route); route();
+document.getElementById('navBtn').onclick = () => menu.classList.add('open');
+document.getElementById('menuClose').onclick = () => menu.classList.remove('open');
+document.getElementById('menuBackdrop').onclick = () => menu.classList.remove('open');
+addEventListener('keydown', e => { if (e.key === 'Escape') menu.classList.remove('open'); });
+const vid = document.querySelector('.landing video');
+vid.addEventListener('loadeddata', () => document.getElementById('landing').classList.add('has-video'));
+
+/* ---------- interaction scene (coordinates are the Make file's own, in SVG units) ---------- */
+const NS = 'http://www.w3.org/2000/svg';
+const COL = { B: '#6691FF', P: '#FF81FB', Y: '#FEF886', O: '#FFA530', G: '#DAFFBC' };
+const AGE = { B: 'young adults', P: 'children', Y: 'teens', O: 'elderly' };
+const T = {
+  esc:  ['M20412.8 9568.68V9567.3H20557.8V9993.3H20122.8V9851.3H20123.8L20267.5 9709.55L20267.8 9709.3V9709.3H20267.8L20412.3 9566.8L20412.8 9568.68Z', 20123, 9567, 435, 427],
+  elev: ['M24345.8 9407.8H24164.8V9452.8H23960.8V9026.8H24141.8V8981.8H24345.8V9407.8Z', 23961, 8982, 385, 471],
+  board:['M15966.3 15107.8C16064.9 15107.8 16144.8 15200.1 16144.8 15314C16144.8 15323.8 16144.2 15333.4 16143.1 15342.8C16131 15242.5 16056.4 15165.3 15966.3 15165.3C15876.2 15165.3 15801.6 15242.5 15789.5 15342.8C15788.4 15333.4 15787.8 15323.8 15787.8 15314C15787.8 15200.1 15867.7 15107.8 15966.3 15107.8Z', 15788, 15108, 357, 235],
+  obj:  ['M9359.8 5247.8C9359.8 5327.12 9352.5 5405.66 9338.33 5478.94C9324.16 5552.22 9303.39 5618.8 9277.2 5674.89C9251.01 5730.98 9219.93 5775.47 9185.71 5805.82C9151.5 5836.17 9114.83 5851.8 9077.8 5851.8C9040.76 5851.8 9004.09 5836.17 8969.88 5805.82C8935.67 5775.47 8904.58 5730.98 8878.39 5674.89C8852.21 5618.8 8831.43 5552.22 8817.26 5478.94C8803.09 5405.66 8795.8 5327.12 8795.8 5247.8L9077.8 5247.8H9359.8Z', 8796, 5248, 564, 604]
+};
+// [x, y, color, kind] ; collapsed offset depends on kind
+const items = [];
+const add = (k, kind, c, x, y, text, extra) => items.push({ k, kind, c, x, y, text, ...extra });
+const circ = {0:['B',9207,12075],1:['B',10356,11222],2:['B',12031,11495],3:['P',13180,12291],4:['O',14639,12291],5:['B',14930,11279],6:['Y',15788,11717],7:['P',16220,11006],28:['B',17322,10675],29:['B',17790,11964],30:['B',18423,10864],31:['B',17209,11643],32:['B',18548,11685],33:['B',17358,12532],34:['B',18277,12430],35:['P',17918,11211],36:['P',19086,11525],37:['Y',19266,10653],38:['O',19127,12396],39:['O',20149,11469],40:['O',21429,11711],41:['O',20265,12612],42:['B',20802,11098],43:['B',21978,11643],44:['B',20825,11998],45:['B',20109,10666],46:['B',21693,12612],47:['P',21645,10727],48:['B',23181,11037],49:['B',24445,11998],50:['Y',24445,10943]};
+for (const k in circ) { const [c,x,y] = circ[k]; add(k, 'circle', c, x, y, 'human: ' + AGE[c]); }
+const ph = {8:['O',8950,14671],9:['B',12764,15534],10:['B',13139,15360],22:['Y',20568,14795],23:['B',20123,15210],24:['B',20440,15338]};
+for (const k in ph) { const [c,x,y] = ph[k]; add(k, 'phone', c, x, y, 'checking phone: ' + AGE[c]); }
+const objT = ['coffee cup','sandwich wrapper','tissue','water bottle','crumpled receipt','plastic bag','napkin'];
+[[25,8796,5248],[26,12704,6686],[27,14507,5286],[51,10394,6686],[52,17340,6839],[53,20123,5248],[54,21978,6716]].forEach(([k,x,y],i) => add(k, 'obj', 'G', x, y, 'objects left behind: ' + objT[i]));
+add(55, 'board', 'O', 15788, 15108, 'checking board: elderly'); add(56, 'board', 'B', 16079, 15467, 'checking board: young adults');
+const esc = {57:['O',20123,9567],58:['O',17244,9695],59:['O',14398,9695],60:['O',20957,9086],61:['O',21607,9453],62:['B',20123,8872],63:['B',17140,8915],64:['B',16436,7948],65:['B',15071,7947],66:['B',13201,9726],67:['B',9857,8049],68:['B',8702,9353],69:['B',17700,9513],70:['B',15882,9482],71:['B',16306,8701],72:['B',17404,8161],73:['B',18277,8161],74:['Y',18908,8161],75:['Y',15718,8873],76:['P',18908,9667],77:['P',18204,8915],78:['P',14853,8915],79:['P',12463,8669],80:['B',21016,9810],81:['B',21016,8374],82:['P',21650,8117],83:['B',22042,8872],84:['B',22042,9753]};
+for (const k in esc) { const [c,x,y] = esc[k]; add(k, 'esc', c, x, y, 'enter tracks through escalator: ' + AGE[c]); }
+const el = {85:['P',23961,8982],86:['B',23301,8330],87:['B',24252,8330],88:['Y',24444,9574]};
+for (const k in el) { const [c,x,y] = el[k]; add(k, 'elev', c, x, y, 'enter tracks through elevator: ' + AGE[c]); }
+const thoughts = [[89,8920,2330,1618,"thought: i can't wait to sleep"],[90,18697,2677,1618,'thought: what should i have for dinner?'],[91,11761,3678,608,'thought: when is this train coming?'],[92,14401,3758,608,'thought: i have so much work to catch up on'],[93,15221,2299,608,'thought: did i lock the door?'],[94,20017,3857,608,'thought: i should text them back'],[95,21654,2373,608,'thought: my feet hurt'],[96,16192,3795,608,'thought: how many stops is it again?']];
+thoughts.forEach(([k,x,y,h,t]) => add(k, 'thought', 'G', x, y, t, { w: 777, h }));
+const pace = [[100,9892,13718,2450,1890,['M12342.3 15077.8L12342.3 15607.8','M9894.3 13717.8L9894.3 14247.8','M9891.98 13978.9L12340 15338.9']],
+  [101,15412,14109,3636,795,['M16243.3 14108.8L16243.3 14638.8','M15417.3 14373.8L15417.3 14903.8','M19048.3 14108.8L19048.3 14638.8','M16238.8 14384.3L19043.8 14369.3','M15411.5 14634.5L16237.5 14384.5']],
+  [102,20503,13984,1466,530,['M20502.8 14259.3H21964.8','M20507.3 13983.8L20507.3 14513.8','M21969.3 13983.8L21969.3 14513.8']]];
+pace.forEach(([k,x,y,w,h,p]) => add(k, 'pace', '', x, y, 'pacing', { w, h, p }));
+// where each kind moves to when the rows collapse into one band
+const SHIFT = { circle:[1,-2805], phone:[0,-5656], obj:[0,2915], board:[0,-5656], esc:[1,50], elev:[1,50], thought:[0,5768], pace:[1,-5656] };
+
+const svg = document.getElementById('svg');
+const el_ = (n, a = {}, parent) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); if (parent) parent.appendChild(e); return e; };
+const scene = el_('g', { class: 'scene' }, svg);
+const ROWS = [[1920,'Thoughts'],[4774,'Objects'],[7639,'Accessibility'],[10480,'Demographic'],[13334,'Gesture']];
+const VX = [5741.4,8568,11394,14221,17047,19873,22700];
+const COLLAPSED_ROW = 7678;
+const rowEls = [];
+ROWS.forEach(([y, name], i) => {
+  const g = el_('g', { 'data-row': i }, scene);
+  el_('rect', { x: 5032, y, width: 20494, height: 2842, fill: 'none', stroke: 'rgba(255,255,255,.7)', 'stroke-width': .9, 'vector-effect': 'non-scaling-stroke' }, g);
+  VX.forEach(x => el_('line', { x1: x, x2: x, y1: y + 410, y2: y + 2483, stroke: 'rgba(255,255,255,.6)', 'stroke-width': .9, 'vector-effect': 'non-scaling-stroke' }, g));
+  const label = el_('text', { x: 2457, y: y + 1421, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 290, class: 'rowlabel' }, scene);
+  label.textContent = name;
+  rowEls.push({ g, y, label });
+});
+[[7086,'Car 1'],[9890,'Car 2-3'],[12720,'Car 3-4'],[15540,'Car 4-5'],[18364,'Car 5-6'],[21189,'Car 7-9'],[24176,'Car 9']].forEach(([x, t]) => {
+  const e = el_('text', { x, y: 17160, 'text-anchor': 'middle', 'dominant-baseline': 'middle', 'font-size': 250 }, scene); e.textContent = t;
+});
+
+const tip = document.getElementById('tip');
+const cap = s => s.replace(/\bi\b/g, 'I').replace(/(^|: )([a-z])/g, (m, a, b) => a + b.toUpperCase());
+const nodes = items.map(it => {
+  const g = el_('g', { class: 'item' }, scene);
+  let w = 432, h = 432;
+  if (it.kind === 'circle') el_('circle', { cx: 216, cy: 216, r: 216, fill: COL[it.c] }, g);
+  else if (it.kind === 'phone') { w = h = 257; el_('rect', { width: 257, height: 257, fill: COL[it.c] }, g); }
+  else if (it.kind === 'thought') { w = it.w; h = it.h; el_('rect', { x: 20, y: 20, width: w - 40, height: h - 40, rx: 150, fill: 'none', stroke: COL.G, 'stroke-width': 1.3, 'stroke-dasharray': '1.2 1.8', 'vector-effect': 'non-scaling-stroke' }, g); }
+  else if (it.kind === 'pace') { w = it.w; h = it.h; it.p.forEach(d => el_('path', { d, transform: `translate(${-it.x} ${-it.y})`, stroke: '#fff', 'stroke-width': .9, 'vector-effect': 'non-scaling-stroke' }, g)); }
+  else { const [d, tx, ty, tw, th] = T[it.kind]; w = tw; h = th; el_('path', { d, transform: `translate(${-tx} ${-ty})`, fill: COL[it.c] }, g); }
+  el_('rect', { x: -60, y: -60, width: w + 120, height: h + 120, fill: 'transparent' }, g); // generous hover target
+  g.style.transform = `translate(${it.x}px, ${it.y}px)`;
+  g.addEventListener('pointerenter', () => { if (document.body.dataset.page !== 'interaction') return; tip.textContent = cap(it.text); tip.classList.add('on'); });
+  g.addEventListener('pointermove', e => { tip.style.left = e.clientX + 'px'; tip.style.top = e.clientY + 'px'; });
+  g.addEventListener('pointerleave', () => tip.classList.remove('on'));
+  return { it, g };
+});
+
+let collapsed = false;
+const toggle = document.getElementById('toggle');
+function layout() {
+  nodes.forEach(({ it, g }) => {
+    const [dx, dy] = collapsed ? SHIFT[it.kind] : [0, 0];
+    g.style.transform = `translate(${it.x + dx}px, ${it.y + dy}px)`;
+  });
+  rowEls.forEach((r, i) => {
+    const keep = i === 2;
+    r.g.style.transform = collapsed ? `translate(0px, ${COLLAPSED_ROW - r.y}px)` : 'translate(0px, 0px)';
+    r.g.style.opacity = collapsed && !keep ? 0 : 1;
+    r.label.style.opacity = collapsed ? 0 : 1;
+  });
+  toggle.textContent = collapsed ? 'EXPAND' : 'COLLAPSE';
+}
+toggle.onclick = () => { collapsed = !collapsed; layout(); };
+layout();
+</script>
+</body>
+</html>
