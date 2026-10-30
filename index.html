@@ -28,6 +28,7 @@
   .story p { font: 400 clamp(13px, 1.25vw, 20px)/1.75 var(--mono); max-width: 36em; position: relative; z-index: 2; }
   .story p + p { margin-top: 1.75em; }
   .story .photo { flex: 1; position: relative; background: url(assets/story.jpg) center / cover no-repeat; }
+  .story .photo video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
   .story .photo::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.35); }
 
   /* ---------- key ---------- */
@@ -40,7 +41,8 @@
   .interaction text { fill: #fff; font-family: var(--mono); }
   .scene * { transition: transform .9s cubic-bezier(.65,0,.35,1), opacity .9s cubic-bezier(.65,0,.35,1); }
   .item { cursor: pointer; }
-  .toggle { position: absolute; right: 52px; bottom: 36px; background: none; border: 0; color: #fff; font: 400 11px/1 var(--mono); letter-spacing: .14em; padding-bottom: 6px; border-bottom: 1px solid #fff; cursor: pointer; }
+  .toggle { cursor: pointer; }
+  .toggle text { font-size: 230px; letter-spacing: 34px; text-decoration: underline; text-decoration-thickness: 12px; text-underline-offset: 150px; }
   .tip { position: fixed; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .12s; background: #2e2e2e; border: 1px solid #000; border-radius: 8px; padding: 7px 12px; font: 400 11px/1.3 var(--mono); color: #fff; white-space: nowrap; transform: translate(-50%, calc(-100% - 14px)); }
   .tip.on { opacity: 1; }
 
@@ -82,7 +84,7 @@
   <section class="page landing" id="landing">
     <!-- drop your exported landing animation at assets/landing.mp4 and it plays automatically -->
     <div class="still"></div>
-    <video autoplay muted loop playsinline preload="auto"><source src="assets/landing.mp4" type="video/mp4"></video>
+    <video autoplay muted loop playsinline preload="auto" poster="assets/landing.png"><source src="assets/landing.mp4" type="video/mp4"></video>
   </section>
 
   <section class="page story" id="story">
@@ -91,7 +93,7 @@
       <p>A little tapping on the foot, constantly look around for the train to come. A sense of voice is telling you that this is a waste of time. But what if it’s not?</p>
       <p>Waiting is something people see as dead time when it doesn’t have to be, as well as the idea that strangers you see at the station are all waiting together but never actually together. A platform is full of people sharing the same delay, the same annoyance, and the same boredom, and almost no one acknowledges it.</p>
     </div>
-    <div class="photo"></div>
+    <div class="photo"><video autoplay muted loop playsinline preload="auto" poster="assets/story.jpg"><source src="assets/story.mp4" type="video/mp4"></video></div>
   </section>
 
   <section class="page key" id="key">
@@ -100,9 +102,8 @@
 
   <section class="page interaction" id="interaction">
     <div class="bg"></div>
-    <svg id="svg" viewBox="300 1500 25700 16000" preserveAspectRatio="xMidYMid meet"></svg>
-    <button class="toggle" id="toggle">COLLAPSE</button>
-  </section>
+    <svg id="svg" viewBox="-460 1000 29200 17400" preserveAspectRatio="xMidYMid meet"></svg>
+      </section>
 </main>
 <div class="tip" id="tip"></div>
 
@@ -123,6 +124,7 @@ document.getElementById('menuClose').onclick = () => menu.classList.remove('open
 document.getElementById('menuBackdrop').onclick = () => menu.classList.remove('open');
 addEventListener('keydown', e => { if (e.key === 'Escape') menu.classList.remove('open'); });
 const vid = document.querySelector('.landing video');
+document.querySelectorAll('video').forEach(v => v.play().catch(() => {}));
 vid.addEventListener('loadeddata', () => document.getElementById('landing').classList.add('has-video'));
 
 /* ---------- interaction scene (coordinates are the Make file's own, in SVG units) ---------- */
@@ -196,7 +198,9 @@ const nodes = items.map(it => {
 });
 
 let collapsed = false;
-const toggle = document.getElementById('toggle');
+const toggleG = el_('g', { class: 'toggle' }, svg);
+const toggle = el_('text', { x: 26100, y: 17160, 'dominant-baseline': 'middle', 'text-anchor': 'start' }, toggleG);
+el_('rect', { x: 25900, y: 16800, width: 1900, height: 700, fill: 'transparent' }, toggleG);
 function layout() {
   nodes.forEach(({ it, g }) => {
     const [dx, dy] = collapsed ? SHIFT[it.kind] : [0, 0];
@@ -209,8 +213,9 @@ function layout() {
     r.label.style.opacity = collapsed ? 0 : 1;
   });
   toggle.textContent = collapsed ? 'EXPAND' : 'COLLAPSE';
+  toggle.setAttribute('x', collapsed ? 26300 : 26100);
 }
-toggle.onclick = () => { collapsed = !collapsed; layout(); };
+toggleG.onclick = () => { collapsed = !collapsed; layout(); };
 layout();
 </script>
 </body>
