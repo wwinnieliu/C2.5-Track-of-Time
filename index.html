@@ -42,7 +42,7 @@
   .scene * { transition: transform .9s cubic-bezier(.65,0,.35,1), opacity .9s cubic-bezier(.65,0,.35,1); }
   .item { cursor: pointer; }
   .toggle { cursor: pointer; }
-  .toggle text { font-size: 230px; letter-spacing: 34px; text-decoration: underline; text-decoration-thickness: 12px; text-underline-offset: 150px; }
+  .toggle text { font-size: 230px; letter-spacing: 34px; }
   .tip { position: fixed; z-index: 60; pointer-events: none; opacity: 0; transition: opacity .12s; background: #2e2e2e; border: 1px solid #000; border-radius: 8px; padding: 7px 12px; font: 400 11px/1.3 var(--mono); color: #fff; white-space: nowrap; transform: translate(-50%, calc(-100% - 14px)); }
   .tip.on { opacity: 1; }
 
@@ -201,6 +201,7 @@ let collapsed = false;
 const toggleG = el_('g', { class: 'toggle' }, svg);
 const toggle = el_('text', { x: 26100, y: 17160, 'dominant-baseline': 'middle', 'text-anchor': 'start' }, toggleG);
 el_('rect', { x: 25900, y: 16800, width: 1900, height: 700, fill: 'transparent' }, toggleG);
+const underline = el_('rect', { height: 14, fill: '#fff' }, toggleG);
 function layout() {
   nodes.forEach(({ it, g }) => {
     const [dx, dy] = collapsed ? SHIFT[it.kind] : [0, 0];
@@ -214,6 +215,7 @@ function layout() {
   });
   toggle.textContent = collapsed ? 'EXPAND' : 'COLLAPSE';
   toggle.setAttribute('x', collapsed ? 26300 : 26100);
+  const bb = toggle.getBBox(); underline.setAttribute('x', bb.x); underline.setAttribute('width', bb.width - 34); underline.setAttribute('y', 17160 + 175);
 }
 toggleG.onclick = () => { collapsed = !collapsed; layout(); };
 layout();
