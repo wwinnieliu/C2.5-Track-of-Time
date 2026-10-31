@@ -85,7 +85,7 @@
 
   <section class="page interaction" id="interaction">
     <div class="bg"></div>
-    <svg id="svg" viewBox="-460 1000 29200 17400" preserveAspectRatio="xMidYMid meet"></svg>
+    <svg id="svg" viewBox="-260 1000 30000 17400" preserveAspectRatio="xMidYMid meet"></svg>
       </section>
 </main>
 <div class="tip" id="tip"></div>
@@ -177,8 +177,8 @@ const nodes = items.map(it => {
 
 let collapsed = false;
 const toggleG = el_('g', { class: 'toggle' }, svg);
-const toggle = el_('text', { x: 26100, y: 17160, 'dominant-baseline': 'middle', 'text-anchor': 'start' }, toggleG);
-el_('rect', { x: 25900, y: 16800, width: 1900, height: 700, fill: 'transparent' }, toggleG);
+const toggle = el_('text', { x: 26900, y: 17160, 'dominant-baseline': 'middle', 'text-anchor': 'start' }, toggleG);
+el_('rect', { x: 26700, y: 16800, width: 2300, height: 700, fill: 'transparent' }, toggleG);
 const underline = el_('rect', { height: 14, fill: '#fff' }, toggleG);
 function layout() {
   nodes.forEach(({ it, g }) => {
@@ -192,7 +192,7 @@ function layout() {
     r.label.style.opacity = collapsed ? 0 : 1;
   });
   toggle.textContent = collapsed ? 'EXPAND' : 'COLLAPSE';
-  toggle.setAttribute('x', collapsed ? 26300 : 26100);
+  toggle.setAttribute('x', collapsed ? 27100 : 26900);
   const bb = toggle.getBBox(); underline.setAttribute('x', bb.x); underline.setAttribute('width', bb.width - 34); underline.setAttribute('y', 17160 + 175);
 }
 toggleG.onclick = () => { collapsed = !collapsed; layout(); };
