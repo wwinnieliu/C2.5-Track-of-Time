@@ -17,8 +17,10 @@
 
   /* ---------- landing ---------- */
   .landing video, .landing .still { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-  .landing .still { background: url(assets/landing.png) center / cover no-repeat; animation: drift 26s ease-in-out infinite alternate; }
+  .landing .still { background: #000; }
   .landing.has-video .still { display: none; }
+  .landing video.hidden { visibility: hidden; }
+  .landing #shapes { transform: translateY(5vh); }
   @keyframes drift { from { transform: scale(1.02) translateX(-1%); } to { transform: scale(1.08) translateX(1%); } }
 
   /* ---------- story ---------- */
@@ -32,8 +34,8 @@
   .story .photo::after { content: ""; position: absolute; inset: 0; background: rgba(0,0,0,.35); }
 
   /* ---------- key ---------- */
-  .key { display: grid; place-items: center; }
-  .key img { max-width: 94vw; max-height: 94vh; object-fit: contain; }
+  .key { display: grid; place-items: center; padding-top: 70px; box-sizing: border-box; }
+  .key img { max-width: 94vw; max-height: calc(94vh - 70px); object-fit: contain; }
 
   /* ---------- interaction ---------- */
   .interaction .bg { position: absolute; inset: -40px; background: url(assets/landing.png) center / cover no-repeat; filter: blur(14px) brightness(.6) grayscale(1); }
@@ -60,14 +62,15 @@
   <a class="brand" href="#landing">Track of Time</a>
   <a href="#story" data-page="story">Story</a>
   <a href="#key" data-page="key">Key</a>
-  <a href="#interaction" data-page="interaction">Interaction</a>
+  <a href="#interaction" data-page="interaction">Explore the tracks</a>
 </nav>
 
 <main>
   <section class="page landing" id="landing">
     <!-- drop your exported landing animation at assets/landing.mp4 and it plays automatically -->
     <div class="still"></div>
-    <video autoplay muted loop playsinline preload="auto" poster="assets/landing.png"><source src="assets/landing.mp4" type="video/mp4"></video>
+    <video id="clock" autoplay muted playsinline preload="auto"><source src="assets/landing.mp4" type="video/mp4"></video>
+    <video id="shapes" class="hidden" muted playsinline preload="auto"><source src="assets/landing-shapes.mp4" type="video/mp4"></video>
   </section>
 
   <section class="page story" id="story">
@@ -101,9 +104,20 @@ function route() {
   document.getElementById('tip').classList.remove('on');
 }
 addEventListener('hashchange', route); route();
-const vid = document.querySelector('.landing video');
-document.querySelectorAll('video').forEach(v => v.play().catch(() => {}));
-vid.addEventListener('loadeddata', () => document.getElementById('landing').classList.add('has-video'));
+const clock = document.getElementById('clock'), shapes = document.getElementById('shapes');
+const SHAPES_START = 4.7; /* the old animation's train opening ends here; the clock ending replaces it */
+document.querySelectorAll('.story video').forEach(v => v.play().catch(() => {}));
+clock.play().catch(() => {});
+clock.addEventListener('loadeddata', () => document.getElementById('landing').classList.add('has-video'));
+shapes.addEventListener('loadedmetadata', () => { shapes.currentTime = SHAPES_START; });
+clock.addEventListener('ended', () => {
+  shapes.currentTime = SHAPES_START; shapes.classList.remove('hidden');
+  shapes.play().then(() => clock.classList.add('hidden')).catch(() => {});
+});
+shapes.addEventListener('ended', () => {
+  clock.currentTime = 0; clock.classList.remove('hidden');
+  clock.play().then(() => shapes.classList.add('hidden')).catch(() => {});
+});
 
 /* ---------- interaction scene (coordinates are the Make file's own, in SVG units) ---------- */
 const NS = 'http://www.w3.org/2000/svg';
